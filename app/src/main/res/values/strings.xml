@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Smart Library System</string>
+    <string name="title_activity_splash_screen">SplashScreen</string>
+    <string name="title_activity_login_screen">LoginScreen</string>
+    <string name="title_activity_registration_screen">RegistrationScreen</string>
+    <string name="title_activity_forget_screen">ForgetScreen</string>
+    <string name="title_activity_dashboard">Dashboard</string>
+</resources>
