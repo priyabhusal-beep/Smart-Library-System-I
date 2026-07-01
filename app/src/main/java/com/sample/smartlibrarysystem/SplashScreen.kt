@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
 
+
 class SplashScreen : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

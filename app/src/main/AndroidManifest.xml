@@ -2,7 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -10,7 +13,43 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SmartLibrarySystem">
+        android:theme="@style/Theme.SmartLibrarySystem"
+        tools:replace="android:fullBackupContent">
+        <activity
+            android:name=".EditBooksActivity"
+            android:exported="false"
+            android:label="@string/title_activity_edit_books"
+            android:theme="@style/Theme.SmartLibrarySystem" />
+        <activity
+            android:name=".ManageBookScreen"
+            android:exported="false"
+            android:label="@string/title_activity_manage_book_screen"
+            android:theme="@style/Theme.SmartLibrarySystem" />
+        <activity
+            android:name=".AdminDashboardActivity"
+            android:exported="false"
+            android:label="@string/title_activity_admin_dashboard"
+            android:theme="@style/Theme.SmartLibrarySystem" />
+        <activity
+            android:name=".BookDetailsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_book_details"
+            android:theme="@style/Theme.SmartLibrarySystem" />
+        <activity
+            android:name=".BookTypeActivity"
+            android:exported="false"
+            android:label="@string/title_activity_book_type"
+            android:theme="@style/Theme.SmartLibrarySystem" />
+        <activity
+            android:name=".EditProfileActivity"
+            android:exported="false"
+            android:label="@string/title_activity_edit_profile"
+            android:theme="@style/Theme.SmartLibrarySystem" />
+        <activity
+            android:name=".ProfileScreen"
+            android:exported="false"
+            android:label="@string/title_activity_profile_screen"
+            android:theme="@style/Theme.SmartLibrarySystem" />
         <activity
             android:name=".Dashboard"
             android:exported="false"
@@ -46,13 +85,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.SmartLibrarySystem">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:theme="@style/Theme.SmartLibrarySystem" />
     </application>
 
 </manifest>

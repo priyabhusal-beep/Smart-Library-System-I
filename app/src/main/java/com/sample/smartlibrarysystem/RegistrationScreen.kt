@@ -1,6 +1,10 @@
 package com.sample.smartlibrarysystem
 
+import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,12 +31,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
+import com.sample.smartlibrarysystem.viewmodel.UserViewModel
 
 class RegistrationScreen : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         enableEdgeToEdge()
 
         setContent {
@@ -45,6 +49,9 @@ class RegistrationScreen : ComponentActivity() {
 @Composable
 fun RegistrationActivity() {
 
+    val context = LocalContext.current
+    val userViewModel = remember { UserViewModel() }
+
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -54,7 +61,6 @@ fun RegistrationActivity() {
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    // ✅ LIGHT BACKGROUND
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(
             Color(0xFFFFFFFF),
@@ -76,7 +82,6 @@ fun RegistrationActivity() {
             .background(backgroundGradient),
         contentAlignment = Alignment.Center
     ) {
-
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
@@ -87,18 +92,14 @@ fun RegistrationActivity() {
                     shape = RoundedCornerShape(28.dp)
                 ),
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Image(
                     painter = painterResource(id = R.drawable.smartlibrary),
                     contentDescription = "App Logo",
@@ -125,9 +126,6 @@ fun RegistrationActivity() {
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-
-
-                // FULL NAME
                 OutlinedTextField(
                     value = fullName,
                     onValueChange = { fullName = it },
@@ -154,7 +152,6 @@ fun RegistrationActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // EMAIL
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -182,7 +179,6 @@ fun RegistrationActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // PHONE
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
@@ -210,7 +206,6 @@ fun RegistrationActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // PASSWORD
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -255,7 +250,6 @@ fun RegistrationActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // CONFIRM PASSWORD (FIXED BUG HERE)
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
@@ -302,9 +296,33 @@ fun RegistrationActivity() {
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // REGISTER BUTTON
                 Button(
-                    onClick = { },
+                    onClick = {
+                        userViewModel.register(
+                            name = fullName,
+                            email = email,
+                            phone = phone,
+                            password = password,
+                            confirmPassword = confirmPassword
+                        ) { success, message ->
+
+                            if (success) {
+                                Toast.makeText(
+                                    context,
+                                    "Registered Successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp),

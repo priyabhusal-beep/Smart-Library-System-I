@@ -5,4 +5,11 @@
     <string name="title_activity_registration_screen">RegistrationScreen</string>
     <string name="title_activity_forget_screen">ForgetScreen</string>
     <string name="title_activity_dashboard">Dashboard</string>
+    <string name="title_activity_profile_screen">ProfileScreen</string>
+    <string name="title_activity_edit_profile">EditProfileActivity</string>
+    <string name="title_activity_book_type">BookTypeActivity</string>
+    <string name="title_activity_book_details">BookDetailsActivity</string>
+    <string name="title_activity_admin_dashboard">AdminDashboardActivity</string>
+    <string name="title_activity_manage_book_screen">ManageBookScreen</string>
+    <string name="title_activity_edit_books">EditBooksActivity</string>
 </resources>

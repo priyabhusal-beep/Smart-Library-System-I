@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "564239104972",
+    "firebase_url": "https://smart-library-system-i-default-rtdb.firebaseio.com",
+    "project_id": "smart-library-system-i",
+    "storage_bucket": "smart-library-system-i.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564239104972:android:58533893b514c6b5097b69",
+        "android_client_info": {
+          "package_name": "com.sample.smartlibrarysystem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcLj9MxjDywvnLhTFXEh6B2DsVcTk9DeE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

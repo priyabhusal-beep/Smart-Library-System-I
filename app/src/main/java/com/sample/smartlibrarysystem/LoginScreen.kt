@@ -1,9 +1,15 @@
 package com.sample.smartlibrarysystem
 
+import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,14 +31,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.Image
+import com.google.firebase.database.FirebaseDatabase
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
+import com.sample.smartlibrarysystem.viewmodel.UserViewModel
 
 class LoginScreen : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         enableEdgeToEdge()
 
         setContent {
@@ -44,22 +50,22 @@ class LoginScreen : ComponentActivity() {
 
 @Composable
 fun LoginScreenUI() {
+    val context = LocalContext.current
+    val userViewModel = remember { UserViewModel() }
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
 
-    // ✅ LIGHT BACKGROUND
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFFFFFFFF),
+            Color.White,
             Color(0xFFF1F5F9),
             Color(0xFFE2E8F0)
         )
     )
 
-    // Button gradient (kept attractive)
     val buttonGradient = Brush.horizontalGradient(
         colors = listOf(
             Color(0xFF06B6D4),
@@ -73,8 +79,6 @@ fun LoginScreenUI() {
             .background(backgroundGradient),
         contentAlignment = Alignment.Center
     ) {
-
-        // Login Card (LIGHT STYLE)
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.90f)
@@ -85,19 +89,14 @@ fun LoginScreenUI() {
                     shape = RoundedCornerShape(28.dp)
                 ),
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                // Logo
                 Image(
                     painter = painterResource(id = R.drawable.smartlibrary),
                     contentDescription = "App Logo",
@@ -124,13 +123,10 @@ fun LoginScreenUI() {
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // Email Field
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    placeholder = {
-                        Text("Email Address", color = Color.Gray)
-                    },
+                    placeholder = { Text("Email Address", color = Color.Gray) },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.baseline_email_24),
@@ -140,6 +136,7 @@ fun LoginScreenUI() {
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF1E3A8A),
                         unfocusedBorderColor = Color.LightGray,
@@ -151,17 +148,11 @@ fun LoginScreenUI() {
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // Password Field
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text(
-                            text = "Password",
-                            color = Color.Gray
-                        )
-                    },
+                    label = { Text("Password", color = Color.Gray) },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.baseline_lock_24),
@@ -187,13 +178,8 @@ fun LoginScreenUI() {
                     visualTransformation =
                         if (passwordVisible) VisualTransformation.None
                         else PasswordVisualTransformation(),
-
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password
-                    ),
-
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     shape = RoundedCornerShape(14.dp),
-
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
@@ -206,15 +192,12 @@ fun LoginScreenUI() {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Remember Me + Forgot Password
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Row(verticalAlignment = Alignment.CenterVertically) {
-
                         Checkbox(
                             checked = rememberMe,
                             onCheckedChange = { rememberMe = it },
@@ -230,7 +213,11 @@ fun LoginScreenUI() {
                         )
                     }
 
-                    TextButton(onClick = { }) {
+                    TextButton(
+                        onClick = {
+                            context.startActivity(Intent(context, ForgetScreen::class.java))
+                        }
+                    ) {
                         Text(
                             text = "Forgot Password?",
                             color = Color(0xFF2563EB),
@@ -241,19 +228,43 @@ fun LoginScreenUI() {
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Gradient Login Button
                 Button(
-                    onClick = { },
+                    onClick = {
+                        val inputEmail = email.trim()
+                        val inputPassword = password.trim()
+
+                        if (inputEmail.isEmpty() || inputPassword.isEmpty()) {
+                            Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        if (inputEmail == "admin@gmail.com" && inputPassword == "admin123") {
+                            Toast.makeText(context, "Admin Login Successful", Toast.LENGTH_SHORT).show()
+
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                context.startActivity(Intent(context, AdminDashboardActivity::class.java))
+                            }, 700)
+                        } else {
+                            userViewModel.login(inputEmail, inputPassword) { success, message, _ ->
+                                if (success) {
+                                    Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
+
+                                    Handler(Looper.getMainLooper()).postDelayed({
+                                        context.startActivity(Intent(context, Dashboard::class.java))
+                                    }, 700)
+                                } else {
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp),
                     shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     contentPadding = PaddingValues()
                 ) {
-
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -263,7 +274,6 @@ fun LoginScreenUI() {
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-
                         Text(
                             text = "Login",
                             color = Color.White,
@@ -272,32 +282,47 @@ fun LoginScreenUI() {
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(15.dp))
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE5E7EB))
+                    HorizontalDivider(
+                        modifier = Modifier.weight(1f),
+                        color = Color(0xFFE5E7EB)
+                    )
+
                     Text(
-                        "OR CONTINUE WITH",
+                        text = "OR CONTINUE WITH",
                         modifier = Modifier.padding(horizontal = 12.dp),
                         fontSize = 10.sp,
                         color = Color.Gray,
                         fontWeight = FontWeight.Medium
                     )
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE5E7EB))
+
+                    HorizontalDivider(
+                        modifier = Modifier.weight(1f),
+                        color = Color(0xFFE5E7EB)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(25.dp))
 
-                // Google Login Button with Icon
                 OutlinedButton(
-                    onClick = { /* Handle google sign in */ },
+                    onClick = {
+                        Toast.makeText(
+                            context,
+                            "Google Sign-In not implemented yet",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB))
+                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
@@ -305,7 +330,9 @@ fun LoginScreenUI() {
                             contentDescription = "Google Logo",
                             modifier = Modifier.size(20.dp)
                         )
+
                         Spacer(modifier = Modifier.width(12.dp))
+
                         Text(
                             text = "Google",
                             color = Color.Black,
@@ -317,21 +344,28 @@ fun LoginScreenUI() {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Don't have an account? ", color = Color.Gray, fontSize = 14.sp)
+                    Text(
+                        text = "Don't have an account? ",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+
                     TextButton(
-                        onClick = { /* Handle sign up */ },
+                        onClick = {
+                            context.startActivity(
+                                Intent(context, RegistrationScreen::class.java)
+                            )
+                        },
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
-                            "Sign Up",
+                            text = "Sign Up",
                             color = Color(0xFF1E3A8A),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
                     }
                 }
-
-
             }
         }
     }
