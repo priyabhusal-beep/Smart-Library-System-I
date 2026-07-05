@@ -6,10 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +21,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -33,6 +33,7 @@ class ProfileScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             SmartLibrarySystemTheme {
                 ProfileScreenActivity()
@@ -45,11 +46,13 @@ class ProfileScreen : ComponentActivity() {
 fun ProfileScreenActivity() {
     val context = LocalContext.current
     val userRepo = remember { UserRepoImp() }
+
     var user by remember { mutableStateOf<UserModel?>(null) }
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
+
         if (userId != null) {
             userRepo.getUserById(userId) { success, _, fetchedUser ->
                 if (success) user = fetchedUser
@@ -61,34 +64,16 @@ fun ProfileScreenActivity() {
     }
 
     Scaffold(
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_arrow_back_ios_24),
-                        contentDescription = "Back"
-                    )
-                }
-                Text("My Profile", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                IconButton(onClick = { }) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_settings_24),
-                        contentDescription = "Settings"
-                    )
-                }
-            }
-        },
         containerColor = Color(0xFFF8F7FF)
     ) { padding ->
 
         if (loading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
             return@Scaffold
@@ -98,16 +83,45 @@ fun ProfileScreenActivity() {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(16.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(18.dp))
 
-            // Profile picture or blank circle icon
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { (context as? ComponentActivity)?.finish() }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_arrow_back_ios_24),
+                        contentDescription = "Back",
+                        tint = Color(0xFFAA3E3E)
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                Text(
+                    text = "My Profile",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF111827)
+                )
+
+                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.width(48.dp))
+            }
+
+            Spacer(Modifier.height(22.dp))
+
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(112.dp)
                     .clip(CircleShape)
                     .background(Color(0xFFE5E7EB)),
                 contentAlignment = Alignment.Center
@@ -117,7 +131,7 @@ fun ProfileScreenActivity() {
                         painter = painterResource(R.drawable.baseline_person_24),
                         contentDescription = "Profile picture",
                         tint = Color(0xFF9CA3AF),
-                        modifier = Modifier.size(56.dp)
+                        modifier = Modifier.size(58.dp)
                     )
                 } else {
                     AsyncImage(
@@ -129,52 +143,64 @@ fun ProfileScreenActivity() {
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
             Text(
                 text = user?.name?.ifEmpty { "No Name" } ?: "No Name",
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
                 color = Color(0xFF111827)
             )
 
+            Spacer(Modifier.height(4.dp))
+
             Text(
                 text = user?.email ?: "",
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 color = Color.Gray
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
 
             Button(
                 onClick = {
                     context.startActivity(Intent(context, EditProfileActivity::class.java))
                 },
-                modifier = Modifier.fillMaxWidth(0.7f),
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB45454))
-            ) {
-                Text("Edit Profile")
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White)
-                    .padding(16.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFB45454)
+                )
             ) {
-                ProfileInfoRow("Full Name", user?.name?.ifEmpty { "N/A" } ?: "N/A")
-                Divider()
-                ProfileInfoRow("Email Address", user?.email?.ifEmpty { "N/A" } ?: "N/A")
-                Divider()
-                ProfileInfoRow("Phone Number", user?.contact?.ifEmpty { "N/A" } ?: "N/A")
-
+                Text(
+                    text = "Edit Profile",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp)
+                ) {
+                    ProfileInfoRow("Full Name", user?.name?.ifEmpty { "N/A" } ?: "N/A")
+                    HorizontalDivider()
+                    ProfileInfoRow("Email Address", user?.email?.ifEmpty { "N/A" } ?: "N/A")
+                    HorizontalDivider()
+                    ProfileInfoRow("Phone Number", user?.contact?.ifEmpty { "N/A" } ?: "N/A")
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
 
             OutlinedButton(
                 onClick = {
@@ -185,11 +211,21 @@ fun ProfileScreenActivity() {
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626))
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFFDC2626)
+                )
             ) {
-                Text("Log out")
+                Text(
+                    text = "Log out",
+                    fontWeight = FontWeight.Bold
+                )
             }
+
+            Spacer(Modifier.height(30.dp))
         }
     }
 }
@@ -199,18 +235,21 @@ fun ProfileInfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 13.sp, color = Color.Gray)
-        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
-    }
-}
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            color = Color.Gray
+        )
 
-@Preview(showBackground = true)
-@Composable
-fun ProfilePreview() {
-    SmartLibrarySystemTheme {
-        ProfileScreenActivity()
+        Text(
+            text = value,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF111827)
+        )
     }
 }
