@@ -1,5 +1,6 @@
 package com.sample.smartlibrarysystem
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -67,40 +68,78 @@ fun EditBooksScreen() {
         containerColor = Color(0xFFF8F7FF),
 
         bottomBar = {
-
             NavigationBar(
-                containerColor = Color.White
+                containerColor = Color.White,
+                tonalElevation = 6.dp
             ) {
-
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Text("📚", fontSize = 20.sp) },
-                    label = { Text("Books") }
+                val navColors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0xFFAA3E3E),
+                    selectedTextColor = Color(0xFFAA3E3E),
+                    unselectedIconColor = Color(0xFF6B7280),
+                    unselectedTextColor = Color(0xFF6B7280),
+                    indicatorColor = Color.Transparent
                 )
 
                 NavigationBarItem(
                     selected = false,
-                    onClick = { },
-                    icon = { Text("👥", fontSize = 20.sp) },
-                    label = { Text("Users") }
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, AdminDashboardActivity::class.java).putExtra("tab", 0)
+                        )
+                        (context as? ComponentActivity)?.finish()
+                    },
+                    icon = { Text("📚", fontSize = 16.sp) },
+                    label = { Text("Books", fontSize = 10.sp) },
+                    colors = navColors
+                )
+
+                NavigationBarItem(
+                    selected = false,
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, AdminDashboardActivity::class.java).putExtra("tab", 1)
+                        )
+                        (context as? ComponentActivity)?.finish()
+                    },
+                    icon = { Text("👥", fontSize = 16.sp) },
+                    label = { Text("Users", fontSize = 10.sp) },
+                    colors = navColors
                 )
 
                 NavigationBarItem(
                     selected = true,
                     onClick = { },
-                    icon = { Text("✏️", fontSize = 20.sp) },
-                    label = { Text("Edit") }
+                    icon = { Text("✏️", fontSize = 16.sp) },
+                    label = { Text("Edit", fontSize = 10.sp) },
+                    colors = navColors
                 )
 
                 NavigationBarItem(
                     selected = false,
-                    onClick = { },
-                    icon = { Text("👤", fontSize = 20.sp) },
-                    label = { Text("Profile") }
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, AdminDashboardActivity::class.java).putExtra("tab", 2)
+                        )
+                        (context as? ComponentActivity)?.finish()
+                    },
+                    icon = { Text("📖", fontSize = 16.sp) },
+                    label = { Text("Rents", fontSize = 10.sp) },
+                    colors = navColors
+                )
+
+                NavigationBarItem(
+                    selected = false,
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, AdminDashboardActivity::class.java).putExtra("tab", 3)
+                        )
+                        (context as? ComponentActivity)?.finish()
+                    },
+                    icon = { Text("👤", fontSize = 16.sp) },
+                    label = { Text("Profile", fontSize = 10.sp) },
+                    colors = navColors
                 )
             }
-
         }
 
     ) { innerPadding ->
