@@ -1,5 +1,6 @@
 package com.sample.smartlibrarysystem
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -38,15 +39,7 @@ class BookDetailsActivity : ComponentActivity() {
 
         setContent {
             SmartLibrarySystemTheme {
-                BookDetailsScreen(
-                    title = title,
-                    author = author,
-                    type = type,
-                    rating = rating,
-                    available = available,
-                    imageUrl = imageUrl,
-                    summary = summary
-                )
+                BookDetailsScreen(title, author, type, rating, available, imageUrl, summary)
             }
         }
     }
@@ -67,39 +60,48 @@ fun BookDetailsScreen(
     Scaffold(
         containerColor = Color(0xFFF8F2F4),
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF8F2F4))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Surface(
+                color = Color(0xFFF8F2F4),
+                shadowElevation = 8.dp
             ) {
-                Button(
-                    onClick = {
-                        Toast.makeText(context, "Rent Book: $title", Toast.LENGTH_SHORT).show()
-                    },
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB44444))
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("📖 Rent Book", fontWeight = FontWeight.Bold)
-                }
+                    Button(
+                        onClick = {
+                            context.startActivity(
+                                Intent(context, PaymentActivity::class.java).apply {
+                                    putExtra("title", title)
+                                    putExtra("author", author)
+                                    putExtra("imageUrl", imageUrl)
+                                }
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB44444))
+                    ) {
+                        Text("📖 Rent Book", fontWeight = FontWeight.Bold)
+                    }
 
-                OutlinedButton(
-                    onClick = {
-                        Toast.makeText(context, "Added to Wishlist: $title", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFFB44444)
-                    )
-                ) {
-                    Text("♡ Wishlist", fontWeight = FontWeight.Bold)
+                    OutlinedButton(
+                        onClick = {
+                            Toast.makeText(context, "Added to Wishlist: $title", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFB44444))
+                    ) {
+                        Text("♡ Wishlist", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -110,8 +112,10 @@ fun BookDetailsScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
+            Spacer(Modifier.height(10.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
                     Text("←", fontSize = 26.sp, color = Color(0xFFAA3E3E))
@@ -137,20 +141,21 @@ fun BookDetailsScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(18.dp))
 
             AsyncImage(
                 model = imageUrl.trim(),
                 contentDescription = title,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .width(170.dp)
-                    .height(220.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .width(150.dp)
+                    .height(190.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFE5E7EB)),
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(18.dp))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -165,7 +170,7 @@ fun BookDetailsScreen(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(22.dp))
 
             Text(
                 text = title,
@@ -176,16 +181,10 @@ fun BookDetailsScreen(
 
             Spacer(Modifier.height(6.dp))
 
-            Text(
-                text = author,
-                fontSize = 16.sp,
-                color = Color.Gray
-            )
+            Text(author, fontSize = 16.sp, color = Color.Gray)
 
             Spacer(Modifier.height(14.dp))
-
             Divider(color = Color(0xFFB7A6A6))
-
             Spacer(Modifier.height(12.dp))
 
             Text(
@@ -206,7 +205,7 @@ fun BookDetailsScreen(
                 lineHeight = 22.sp
             )
 
-            Spacer(Modifier.height(90.dp))
+            Spacer(Modifier.height(30.dp))
         }
     }
 }

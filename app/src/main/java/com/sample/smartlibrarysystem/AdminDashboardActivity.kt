@@ -36,8 +36,8 @@ import com.sample.smartlibrarysystem.repo.ImageRepoImp
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
 import com.sample.smartlibrarysystem.viewmodel.BookViewModel
 import com.sample.smartlibrarysystem.viewmodel.ImageViewModel
-//import androidx.compose.ui.platform.LocalContext
-//import com.sample.smartlibrarysystem.viewmodel.UserViewModel
+import com.sample.smartlibrarysystem.model.RentedBookModel
+
 class AdminDashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,40 +59,42 @@ fun AdminDashboardScreen() {
     Scaffold(
         containerColor = Color(0xFFF8F7FF),
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White
-            ) {
-
+            NavigationBar(containerColor = Color.White) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    icon = { Text("📚", fontSize = 20.sp) },
-                    label = { Text("Books") }
+                    icon = { Text("📚", fontSize = 18.sp) },
+                    label = { Text("Books", fontSize = 11.sp) }
                 )
 
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    icon = { Text("👥", fontSize = 20.sp) },
-                    label = { Text("Users") }
+                    icon = { Text("👥", fontSize = 18.sp) },
+                    label = { Text("Users", fontSize = 11.sp) }
                 )
 
                 NavigationBarItem(
                     selected = false,
                     onClick = {
-                        context.startActivity(
-                            Intent(context, EditBooksActivity::class.java)
-                        )
+                        context.startActivity(Intent(context, EditBooksActivity::class.java))
                     },
-                    icon = { Text("✏️", fontSize = 20.sp) },
-                    label = { Text("Edit") }
+                    icon = { Text("✏️", fontSize = 18.sp) },
+                    label = { Text("Edit", fontSize = 11.sp) }
                 )
 
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    icon = { Text("👤", fontSize = 20.sp) },
-                    label = { Text("Profile") }
+                    icon = { Text("📖", fontSize = 18.sp) },
+                    label = { Text("Rents", fontSize = 11.sp) }
+                )
+
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    icon = { Text("👤", fontSize = 18.sp) },
+                    label = { Text("Profile", fontSize = 11.sp) }
                 )
             }
         }
@@ -100,8 +102,9 @@ fun AdminDashboardScreen() {
         when (selectedTab) {
             0 -> AddBookScreen(Modifier.padding(padding))
             1 -> TotalUsersScreen(Modifier.padding(padding))
-            2 -> AdminSectionScreen(Modifier.padding(padding))
-           }
+            2 -> AdminRentedBooksScreen(Modifier.padding(padding))
+            3 -> AdminSectionScreen(Modifier.padding(padding))
+        }
 
     }
 }
@@ -270,12 +273,12 @@ fun AddBookScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun TotalUsersScreen(modifier: Modifier = Modifier) {
-//    val context = LocalContext.current
-//    val userViewModel = remember { UserViewModel() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val userViewModel = remember { com.sample.smartlibrarysystem.viewmodel.UserViewModel() }
+
     var users by remember { mutableStateOf<List<UserModel>>(emptyList()) }
 
-
-    LaunchedEffect(Unit) {
+    fun loadUsers() {
         FirebaseDatabase.getInstance()
             .getReference("users")
             .get()
@@ -291,6 +294,10 @@ fun TotalUsersScreen(modifier: Modifier = Modifier) {
 
                 users = list
             }
+    }
+
+    LaunchedEffect(Unit) {
+        loadUsers()
     }
 
     Column(
@@ -317,6 +324,8 @@ fun TotalUsersScreen(modifier: Modifier = Modifier) {
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(users) { user ->
+                var showDialog by remember { mutableStateOf(false) }
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
@@ -328,15 +337,66 @@ fun TotalUsersScreen(modifier: Modifier = Modifier) {
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
+
                         Text(user.email, color = Color.Gray, fontSize = 13.sp)
                         Text(user.contact, color = Color.Gray, fontSize = 13.sp)
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Button(
+                            onClick = { showDialog = true },
+                            modifier = Modifier.align(Alignment.End),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Red
+                            )
+                        ) {
+                            Text("Delete")
+                        }
                     }
+                }
+
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = { Text("Delete User") },
+                        text = { Text("Are you sure you want to delete this user?") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    userViewModel.deleteUser(user.id) { success, message ->
+                                        Toast.makeText(
+                                            context,
+                                            message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                        if (success) {
+                                            loadUsers()
+                                        }
+                                    }
+
+                                    showDialog = false
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Red
+                                )
+                            ) {
+                                Text("Delete")
+                            }
+                        },
+                        dismissButton = {
+                            OutlinedButton(
+                                onClick = { showDialog = false }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
                 }
             }
         }
     }
 }
-
 @Composable
 fun AdminSectionScreen(modifier: Modifier = Modifier) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -436,6 +496,85 @@ fun CategoryDropdown(
                         expanded = false
                     }
                 )
+            }
+        }
+    }
+}
+@Composable
+fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
+    var rentedBooks by remember { mutableStateOf<List<RentedBookModel>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        FirebaseDatabase.getInstance()
+            .getReference("rented_books")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val list = mutableListOf<RentedBookModel>()
+
+                for (child in snapshot.children) {
+                    val rent = child.getValue(RentedBookModel::class.java)
+                    if (rent != null) list.add(rent)
+                }
+
+                rentedBooks = list
+            }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
+        Text(
+            text = "Rented Books",
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFAA3E3E)
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "Total Rented: ${rentedBooks.size}",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(rentedBooks) { rent ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AsyncImage(
+                            model = rent.imageUrl,
+                            contentDescription = rent.title,
+                            modifier = Modifier
+                                .width(70.dp)
+                                .height(95.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFE5E7EB)),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Column {
+                            Text(rent.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(rent.author, color = Color.Gray, fontSize = 13.sp)
+                            Text("Payment: ${rent.paymentMethod}", fontSize = 13.sp)
+                            Text("Fee: Rs. ${rent.rentFee}", fontSize = 13.sp)
+                            Text("Status: ${rent.status}", color = Color(0xFF16A34A), fontSize = 13.sp)
+                        }
+                    }
+                }
             }
         }
     }
