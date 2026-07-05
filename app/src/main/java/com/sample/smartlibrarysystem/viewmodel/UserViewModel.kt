@@ -5,9 +5,9 @@ import com.sample.smartlibrarysystem.model.UserModel
 import com.sample.smartlibrarysystem.repo.UserRepo
 import com.sample.smartlibrarysystem.repo.UserRepoImp
 
-class UserViewModel : ViewModel() {
-
+class UserViewModel(
     private val repo: UserRepo = UserRepoImp()
+) : ViewModel() {
 
     fun login(
         email: String,
