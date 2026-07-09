@@ -8,30 +8,23 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.database.FirebaseDatabase
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
 import com.sample.smartlibrarysystem.viewmodel.UserViewModel
 
@@ -58,139 +51,118 @@ fun LoginScreenUI() {
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
 
-    val backgroundGradient = Brush.verticalGradient(
-        colors = listOf(
-            Color.White,
-            Color(0xFFF1F5F9),
-            Color(0xFFE2E8F0)
-        )
-    )
-
-    val buttonGradient = Brush.horizontalGradient(
-        colors = listOf(
-            Color(0xFF06B6D4),
-            Color(0xFF8B5CF6)
-        )
-    )
+    val primary = Color(0xFF8F1D3F)
+    val secondary = Color(0xFFD76C82)
+    val lightPink = Color(0xFFFFF1F5)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundGradient),
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFF7FA), Color(0xFFFFE4EC))
+                )
+            )
+            .padding(18.dp),
         contentAlignment = Alignment.Center
     ) {
         Card(
             modifier = Modifier
-                .fillMaxWidth(0.90f)
-                .padding(16.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color.LightGray.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(28.dp)
-                ),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+            shape = RoundedCornerShape(30.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(10.dp)
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                modifier = Modifier.padding(26.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.smartlibrary),
                     contentDescription = "App Logo",
-                    modifier = Modifier.size(130.dp),
+                    modifier = Modifier.size(105.dp),
                     contentScale = ContentScale.Fit
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "Library Management System",
-                    color = Color.Black,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Welcome Back",
+                    fontSize = 27.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = primary
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Smart Digital Library",
-                    color = Color.DarkGray,
-                    fontSize = 14.sp
+                    text = "Login to continue reading",
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
 
-                Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(26.dp))
 
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    placeholder = { Text("Email Address", color = Color.Gray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Email Address") },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.baseline_email_24),
-                            contentDescription = null,
-                            tint = Color.DarkGray
+                            contentDescription = null
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF1E3A8A),
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    singleLine = true
+                        focusedBorderColor = primary,
+                        focusedLabelColor = primary,
+                        cursorColor = primary
+                    )
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Password", color = Color.Gray) },
+                    placeholder = { Text("Password") },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.baseline_lock_24),
-                            contentDescription = null,
-                            tint = Color.DarkGray
+                            contentDescription = null
                         )
                     },
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
                                 painter = painterResource(
-                                    id = if (passwordVisible)
+                                    if (passwordVisible)
                                         R.drawable.baseline_visibility_24
                                     else
                                         R.drawable.baseline_visibility_off_24
                                 ),
-                                contentDescription = null,
-                                tint = Color.Gray
+                                contentDescription = null
                             )
                         }
                     },
-                    singleLine = true,
                     visualTransformation =
                         if (passwordVisible) VisualTransformation.None
                         else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
-                        focusedBorderColor = Color(0xFF8B5CF6),
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedLabelColor = Color(0xFF8B5CF6),
-                        cursorColor = Color.Black
+                        focusedBorderColor = primary,
+                        focusedLabelColor = primary,
+                        cursorColor = primary
                     )
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -201,16 +173,10 @@ fun LoginScreenUI() {
                         Checkbox(
                             checked = rememberMe,
                             onCheckedChange = { rememberMe = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = Color(0xFF22D3EE)
-                            )
+                            colors = CheckboxDefaults.colors(checkedColor = primary)
                         )
 
-                        Text(
-                            text = "Remember Me",
-                            color = Color.DarkGray,
-                            fontSize = 13.sp
-                        )
+                        Text("Remember Me", fontSize = 13.sp, color = Color.DarkGray)
                     }
 
                     TextButton(
@@ -219,14 +185,15 @@ fun LoginScreenUI() {
                         }
                     ) {
                         Text(
-                            text = "Forgot Password?",
-                            color = Color(0xFF2563EB),
-                            fontSize = 13.sp
+                            "Forgot Password?",
+                            color = primary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
                     onClick = {
@@ -240,7 +207,6 @@ fun LoginScreenUI() {
 
                         if (inputEmail == "admin@gmail.com" && inputPassword == "admin123") {
                             Toast.makeText(context, "Admin Login Successful", Toast.LENGTH_SHORT).show()
-
                             Handler(Looper.getMainLooper()).postDelayed({
                                 context.startActivity(Intent(context, AdminDashboardActivity::class.java))
                             }, 700)
@@ -248,7 +214,6 @@ fun LoginScreenUI() {
                             userViewModel.login(inputEmail, inputPassword) { success, message, _ ->
                                 if (success) {
                                     Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-
                                     Handler(Looper.getMainLooper()).postDelayed({
                                         context.startActivity(Intent(context, Dashboard::class.java))
                                     }, 700)
@@ -269,98 +234,66 @@ fun LoginScreenUI() {
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
-                                brush = buttonGradient,
-                                shape = RoundedCornerShape(18.dp)
+                                Brush.horizontalGradient(listOf(primary, secondary)),
+                                RoundedCornerShape(18.dp)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Login",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("Login", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = Color(0xFFE5E7EB)
-                    )
-
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Divider(modifier = Modifier.weight(1f), color = Color(0xFFE5E7EB))
                     Text(
-                        text = "OR CONTINUE WITH",
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        fontSize = 10.sp,
+                        text = " OR ",
                         color = Color.Gray,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp)
                     )
-
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = Color(0xFFE5E7EB)
-                    )
+                    Divider(modifier = Modifier.weight(1f), color = Color(0xFFE5E7EB))
                 }
 
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
                 OutlinedButton(
                     onClick = {
-                        Toast.makeText(
-                            context,
-                            "Google Sign-In not implemented yet",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(context, "Google Sign-In not implemented yet", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = lightPink)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.google),
-                            contentDescription = "Google Logo",
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Image(
+                        painter = painterResource(id = R.drawable.google),
+                        contentDescription = "Google",
+                        modifier = Modifier.size(20.dp)
+                    )
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
-                        Text(
-                            text = "Google",
-                            color = Color.Black,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Text("Continue with Google", color = Color.Black)
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Don't have an account? ",
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
+                    Text("Don't have an account? ", color = Color.Gray, fontSize = 14.sp)
 
                     TextButton(
                         onClick = {
-                            context.startActivity(
-                                Intent(context, RegistrationScreen::class.java)
-                            )
+                            context.startActivity(Intent(context, RegistrationScreen::class.java))
                         },
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
-                            text = "Sign Up",
-                            color = Color(0xFF1E3A8A),
+                            "Sign Up",
+                            color = primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
