@@ -31,6 +31,8 @@ import coil3.compose.AsyncImage
 import com.sample.smartlibrarysystem.model.BookModel
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
 import com.sample.smartlibrarysystem.viewmodel.BookViewModel
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
 
 class BookTypeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -255,7 +257,13 @@ fun GenreDropdown(
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
-                Text("⌄", fontSize = 18.sp)
+
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_arrow_drop_down_24),
+                    contentDescription = "Dropdown",
+                    tint = Color(0xFFAA3E3E),
+                    modifier = Modifier.size(22.dp)
+                )
             }
         }
 
