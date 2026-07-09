@@ -611,7 +611,6 @@ fun CategoryDropdown(
     }
 }
 
-
 @Composable
 fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
     var rentedBooks by remember { mutableStateOf<List<RentedBookModel>>(emptyList()) }
@@ -623,67 +622,155 @@ fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
             .addOnSuccessListener { snapshot ->
                 val list = mutableListOf<RentedBookModel>()
 
-                for (child in snapshot.children) {
-                    val rent = child.getValue(RentedBookModel::class.java)
-                    if (rent != null) list.add(rent)
+                for (userSnapshot in snapshot.children) {
+                    for (rentSnapshot in userSnapshot.children) {
+                        val rent = rentSnapshot.getValue(RentedBookModel::class.java)
+                        if (rent != null && rent.title.isNotBlank()) {
+                            list.add(rent)
+                        }
+                    }
                 }
 
-                rentedBooks = list
+                rentedBooks = list.sortedByDescending { it.rentedAt }
             }
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(20.dp)
+            .background(Color(0xFFFDF6F8))
+            .padding(horizontal = 18.dp, vertical = 16.dp)
     ) {
         Text(
             text = "Rented Books",
-            fontSize = 26.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFFAA3E3E)
+            color = Color(0xFF7B1E3B)
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "Total Rented: ${rentedBooks.size}",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            text = "Track all rented books and payment status",
+            fontSize = 13.sp,
+            color = Color.Gray
         )
+
+        Spacer(Modifier.height(14.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE4EC))
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "📖", fontSize = 28.sp)
+
+                Spacer(Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = "Total Rented",
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
+
+                    Text(
+                        text = rentedBooks.size.toString(),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF7B1E3B)
+                    )
+                }
+            }
+        }
 
         Spacer(Modifier.height(16.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(rentedBooks) { rent ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
+        if (rentedBooks.isEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Text(
+                    text = "No rented books found.",
+                    modifier = Modifier.padding(18.dp),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 90.dp)
+            ) {
+                items(rentedBooks) { rent ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        AsyncImage(
-                            model = rent.imageUrl,
-                            contentDescription = rent.title,
-                            modifier = Modifier
-                                .width(70.dp)
-                                .height(95.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFE5E7EB)),
-                            contentScale = ContentScale.Crop
-                        )
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = rent.imageUrl,
+                                contentDescription = rent.title,
+                                modifier = Modifier
+                                    .width(70.dp)
+                                    .height(92.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(Color(0xFFE5E7EB)),
+                                contentScale = ContentScale.Crop
+                            )
 
-                        Spacer(Modifier.width(12.dp))
+                            Spacer(Modifier.width(12.dp))
 
-                        Column {
-                            Text(rent.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text(rent.author, color = Color.Gray, fontSize = 13.sp)
-                            Text("Payment: ${rent.paymentMethod}", fontSize = 13.sp)
-                            Text("Fee: Rs. ${rent.rentFee}", fontSize = 13.sp)
-                            Text("Status: ${rent.status}", color = Color(0xFF16A34A), fontSize = 13.sp)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = rent.title,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF111827),
+                                    maxLines = 1
+                                )
+
+                                Spacer(Modifier.height(3.dp))
+
+                                Text(
+                                    text = rent.author,
+                                    color = Color.Gray,
+                                    fontSize = 12.sp,
+                                    maxLines = 1
+                                )
+
+                                Spacer(Modifier.height(8.dp))
+
+                                Text(
+                                    text = "Payment: ${rent.paymentMethod.ifEmpty { "N/A" }}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF374151)
+                                )
+
+                                Text(
+                                    text = "Fee: Rs. ${rent.rentFee}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF374151)
+                                )
+
+                                Text(
+                                    text = "Status: ${rent.status.ifEmpty { "Pending" }}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF16A34A),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
                 }
