@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.sample.smartlibrarysystem.model.RentedBookModel
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
@@ -34,27 +35,46 @@ class PaymentActivity : ComponentActivity() {
 
         setContent {
             SmartLibrarySystemTheme {
-                PaymentScreen(title, author, imageUrl)
+                PaymentScreen(
+                    title = title,
+                    author = author,
+                    imageUrl = imageUrl
+                )
             }
         }
     }
 }
 
 @Composable
-fun PaymentScreen(title: String, author: String, imageUrl: String) {
+fun PaymentScreen(
+    title: String,
+    author: String,
+    imageUrl: String
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
+
     var paymentMethod by remember { mutableStateOf("Cash") }
     var loading by remember { mutableStateOf(false) }
 
-    Scaffold(containerColor = Color(0xFFF8F2F4)) { padding ->
+    Scaffold(
+        containerColor = Color(0xFFF8F2F4)
+    ) { padding ->
+
         Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
                 .padding(20.dp)
         ) {
-            TextButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                Text("← Back", color = Color(0xFFAA3E3E))
+            TextButton(
+                onClick = {
+                    (context as? ComponentActivity)?.finish()
+                }
+            ) {
+                Text(
+                    text = "← Back",
+                    color = Color(0xFFAA3E3E)
+                )
             }
 
             Text(
@@ -89,23 +109,55 @@ fun PaymentScreen(title: String, author: String, imageUrl: String) {
                     Spacer(Modifier.width(14.dp))
 
                     Column {
-                        Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                        Text(author, color = Color.Gray, fontSize = 13.sp)
+                        Text(
+                            text = title,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp
+                        )
+
+                        Text(
+                            text = author,
+                            color = Color.Gray,
+                            fontSize = 13.sp
+                        )
+
                         Spacer(Modifier.height(8.dp))
-                        Text("Rent Fee: Rs. 50", fontWeight = FontWeight.Bold)
+
+                        Text(
+                            text = "Rent Fee: Rs. 50",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
 
             Spacer(Modifier.height(24.dp))
 
-            Text("Choose Payment Method", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(
+                text = "Choose Payment Method",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
 
             Spacer(Modifier.height(12.dp))
 
-            PaymentOption("Cash", paymentMethod) { paymentMethod = it }
-            PaymentOption("eSewa", paymentMethod) { paymentMethod = it }
-            PaymentOption("Khalti", paymentMethod) { paymentMethod = it }
+            PaymentOption(
+                name = "Cash",
+                selected = paymentMethod,
+                onSelect = { paymentMethod = it }
+            )
+
+            PaymentOption(
+                name = "eSewa",
+                selected = paymentMethod,
+                onSelect = { paymentMethod = it }
+            )
+
+            PaymentOption(
+                name = "Khalti",
+                selected = paymentMethod,
+                onSelect = { paymentMethod = it }
+            )
 
             Spacer(Modifier.weight(1f))
 
@@ -113,28 +165,56 @@ fun PaymentScreen(title: String, author: String, imageUrl: String) {
                 onClick = {
                     loading = true
 
-                    val rentRef = FirebaseDatabase.getInstance().getReference("rented_books")
+                    val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+                    if (userId == null) {
+                        loading = false
+                        Toast.makeText(
+                            context,
+                            "Please login first",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
+
+                    val rentRef = FirebaseDatabase.getInstance()
+                        .getReference("rented_books")
+                        .child(userId)
+
                     val rentId = rentRef.push().key ?: ""
 
                     val rentedBook = RentedBookModel(
-                        id = rentId,
+                        rentId = rentId,
+                        userId = userId,
                         title = title,
                         author = author,
                         imageUrl = imageUrl,
                         paymentMethod = paymentMethod,
                         rentFee = 50,
-                        status = "Rented"
+                        status = "Rented",
+                        rentedAt = System.currentTimeMillis()
                     )
 
                     rentRef.child(rentId).setValue(rentedBook)
                         .addOnSuccessListener {
                             loading = false
-                            Toast.makeText(context, "Book rented successfully", Toast.LENGTH_SHORT).show()
+
+                            Toast.makeText(
+                                context,
+                                "Book rented successfully",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
                             (context as? ComponentActivity)?.finish()
                         }
                         .addOnFailureListener {
                             loading = false
-                            Toast.makeText(context, it.message ?: "Failed", Toast.LENGTH_SHORT).show()
+
+                            Toast.makeText(
+                                context,
+                                it.message ?: "Failed to rent book",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                 },
                 enabled = !loading,
@@ -142,10 +222,12 @@ fun PaymentScreen(title: String, author: String, imageUrl: String) {
                     .fillMaxWidth()
                     .height(54.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB44444))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFB44444)
+                )
             ) {
                 Text(
-                    if (loading) "Processing..." else "Confirm Payment",
+                    text = if (loading) "Processing..." else "Confirm Payment",
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -177,7 +259,10 @@ fun PaymentOption(
 
             Spacer(Modifier.width(8.dp))
 
-            Text(name, fontWeight = FontWeight.Bold)
+            Text(
+                text = name,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
