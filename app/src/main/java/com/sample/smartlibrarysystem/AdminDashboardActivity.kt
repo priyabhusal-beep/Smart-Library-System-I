@@ -611,27 +611,70 @@ fun CategoryDropdown(
     }
 }
 
+data class AdminRentItem(
+    val rentId: String = "",
+    val userId: String = "",
+    val userName: String = "Unknown User",
+    val title: String = "",
+    val author: String = "",
+    val imageUrl: String = "",
+    val paymentMethod: String = "N/A",
+    val rentFee: Int = 0,
+    val status: String = "Pending",
+    val rentedAt: Long = 0L
+)
 @Composable
 fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
-    var rentedBooks by remember { mutableStateOf<List<RentedBookModel>>(emptyList()) }
+    var rentedBooks by remember { mutableStateOf<List<AdminRentItem>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        FirebaseDatabase.getInstance()
-            .getReference("rented_books")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val list = mutableListOf<RentedBookModel>()
+        val database = FirebaseDatabase.getInstance()
 
-                for (userSnapshot in snapshot.children) {
-                    for (rentSnapshot in userSnapshot.children) {
-                        val rent = rentSnapshot.getValue(RentedBookModel::class.java)
-                        if (rent != null && rent.title.isNotBlank()) {
-                            list.add(rent)
-                        }
-                    }
+        database.getReference("users").get()
+            .addOnSuccessListener { usersSnapshot ->
+
+                val userNames = mutableMapOf<String, String>()
+
+                for (userChild in usersSnapshot.children) {
+                    val uid = userChild.key ?: ""
+                    val name = userChild.child("name").getValue(String::class.java) ?: "Unknown User"
+                    userNames[uid] = name
                 }
 
-                rentedBooks = list.sortedByDescending { it.rentedAt }
+                database.getReference("rented_books").get()
+                    .addOnSuccessListener { rentSnapshot ->
+
+                        val list = mutableListOf<AdminRentItem>()
+
+                        for (userNode in rentSnapshot.children) {
+                            val userId = userNode.key ?: ""
+
+                            for (rentNode in userNode.children) {
+                                val title = rentNode.child("title").getValue(String::class.java) ?: ""
+
+                                if (title.isNotBlank()) {
+                                    val item = AdminRentItem(
+                                        rentId = rentNode.child("rentId").getValue(String::class.java)
+                                            ?: rentNode.key
+                                            ?: "",
+                                        userId = userId,
+                                        userName = userNames[userId] ?: "Unknown User",
+                                        title = title,
+                                        author = rentNode.child("author").getValue(String::class.java) ?: "Unknown Author",
+                                        imageUrl = rentNode.child("imageUrl").getValue(String::class.java) ?: "",
+                                        paymentMethod = rentNode.child("paymentMethod").getValue(String::class.java) ?: "N/A",
+                                        rentFee = rentNode.child("rentFee").getValue(Int::class.java) ?: 0,
+                                        status = rentNode.child("status").getValue(String::class.java) ?: "Pending",
+                                        rentedAt = rentNode.child("rentedAt").getValue(Long::class.java) ?: 0L
+                                    )
+
+                                    list.add(item)
+                                }
+                            }
+                        }
+
+                        rentedBooks = list.sortedByDescending { it.rentedAt }
+                    }
             }
     }
 
@@ -648,10 +691,8 @@ fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
             color = Color(0xFF7B1E3B)
         )
 
-        Spacer(Modifier.height(4.dp))
-
         Text(
-            text = "Track all rented books and payment status",
+            text = "View user rentals and payment status",
             fontSize = 13.sp,
             color = Color.Gray
         )
@@ -667,16 +708,12 @@ fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "📖", fontSize = 28.sp)
+                Text("📖", fontSize = 28.sp)
 
                 Spacer(Modifier.width(12.dp))
 
                 Column {
-                    Text(
-                        text = "Total Rented",
-                        fontSize = 13.sp,
-                        color = Color.Gray
-                    )
+                    Text("Total Rented", fontSize = 13.sp, color = Color.Gray)
 
                     Text(
                         text = rentedBooks.size.toString(),
@@ -724,7 +761,7 @@ fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
                                 contentDescription = rent.title,
                                 modifier = Modifier
                                     .width(70.dp)
-                                    .height(92.dp)
+                                    .height(95.dp)
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(Color(0xFFE5E7EB)),
                                 contentScale = ContentScale.Crop
@@ -741,8 +778,6 @@ fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
                                     maxLines = 1
                                 )
 
-                                Spacer(Modifier.height(3.dp))
-
                                 Text(
                                     text = rent.author,
                                     color = Color.Gray,
@@ -750,10 +785,17 @@ fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
                                     maxLines = 1
                                 )
 
-                                Spacer(Modifier.height(8.dp))
+                                Spacer(Modifier.height(6.dp))
 
                                 Text(
-                                    text = "Payment: ${rent.paymentMethod.ifEmpty { "N/A" }}",
+                                    text = "User: ${rent.userName}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF7B1E3B),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                Text(
+                                    text = "Payment: ${rent.paymentMethod}",
                                     fontSize = 12.sp,
                                     color = Color(0xFF374151)
                                 )
@@ -765,7 +807,7 @@ fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
                                 )
 
                                 Text(
-                                    text = "Status: ${rent.status.ifEmpty { "Pending" }}",
+                                    text = "Status: ${rent.status}",
                                     fontSize = 12.sp,
                                     color = Color(0xFF16A34A),
                                     fontWeight = FontWeight.SemiBold
