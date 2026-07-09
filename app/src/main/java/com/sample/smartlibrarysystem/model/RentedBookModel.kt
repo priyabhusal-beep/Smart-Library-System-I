@@ -10,7 +10,7 @@ data class RentedBookModel(
     val imageUrl: String = "",
     val summary: String = "",
     val rentedAt: Long = 0L,
-    val paymentMethod: String = "Not selected",
+    val paymentMethod: String = "",
     val rentFee: Int = 0,
-    val status: String = "Pending"
+    val status: String = ""
 )
