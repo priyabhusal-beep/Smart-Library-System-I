@@ -13,4 +13,5 @@
     <string name="title_activity_manage_book_screen">ManageBookScreen</string>
     <string name="title_activity_edit_books">EditBooksActivity</string>
     <string name="title_activity_payment">PaymentActivity</string>
+    <string name="title_activity_borrowed_book_model">BorrowedBookModel</string>
 </resources>

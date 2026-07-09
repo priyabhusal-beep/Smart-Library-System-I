@@ -16,6 +16,11 @@
         android:theme="@style/Theme.SmartLibrarySystem"
         tools:replace="android:fullBackupContent">
         <activity
+            android:name=".BorrowedBookModel"
+            android:exported="false"
+            android:label="@string/title_activity_borrowed_book_model"
+            android:theme="@style/Theme.SmartLibrarySystem" />
+        <activity
             android:name=".PaymentActivity"
             android:exported="false"
             android:label="@string/title_activity_payment"
