@@ -31,14 +31,20 @@ class PaymentActivity : ComponentActivity() {
 
         val title = intent.getStringExtra("title") ?: "Book"
         val author = intent.getStringExtra("author") ?: "Author"
+        val type = intent.getStringExtra("type") ?: ""
+        val rating = intent.getDoubleExtra("rating", 0.0)
         val imageUrl = intent.getStringExtra("imageUrl") ?: ""
+        val summary = intent.getStringExtra("summary") ?: ""
 
         setContent {
             SmartLibrarySystemTheme {
                 PaymentScreen(
                     title = title,
                     author = author,
-                    imageUrl = imageUrl
+                    type = type,
+                    rating = rating,
+                    imageUrl = imageUrl,
+                    summary = summary
                 )
             }
         }
@@ -49,16 +55,17 @@ class PaymentActivity : ComponentActivity() {
 fun PaymentScreen(
     title: String,
     author: String,
-    imageUrl: String
+    type: String,
+    rating: Double,
+    imageUrl: String,
+    summary: String
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
 
     var paymentMethod by remember { mutableStateOf("Cash") }
     var loading by remember { mutableStateOf(false) }
 
-    Scaffold(
-        containerColor = Color(0xFFF8F2F4)
-    ) { padding ->
+    Scaffold(containerColor = Color(0xFFF8F2F4)) { padding ->
 
         Column(
             modifier = Modifier
@@ -71,10 +78,7 @@ fun PaymentScreen(
                     (context as? ComponentActivity)?.finish()
                 }
             ) {
-                Text(
-                    text = "← Back",
-                    color = Color(0xFFAA3E3E)
-                )
+                Text("← Back", color = Color(0xFFAA3E3E))
             }
 
             Text(
@@ -109,24 +113,12 @@ fun PaymentScreen(
                     Spacer(Modifier.width(14.dp))
 
                     Column {
-                        Text(
-                            text = title,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp
-                        )
-
-                        Text(
-                            text = author,
-                            color = Color.Gray,
-                            fontSize = 13.sp
-                        )
+                        Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        Text(author, color = Color.Gray, fontSize = 13.sp)
 
                         Spacer(Modifier.height(8.dp))
 
-                        Text(
-                            text = "Rent Fee: Rs. 50",
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("Rent Fee: Rs. 50", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -141,23 +133,9 @@ fun PaymentScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            PaymentOption(
-                name = "Cash",
-                selected = paymentMethod,
-                onSelect = { paymentMethod = it }
-            )
-
-            PaymentOption(
-                name = "eSewa",
-                selected = paymentMethod,
-                onSelect = { paymentMethod = it }
-            )
-
-            PaymentOption(
-                name = "Khalti",
-                selected = paymentMethod,
-                onSelect = { paymentMethod = it }
-            )
+            PaymentOption("Cash", paymentMethod) { paymentMethod = it }
+            PaymentOption("eSewa", paymentMethod) { paymentMethod = it }
+            PaymentOption("Khalti", paymentMethod) { paymentMethod = it }
 
             Spacer(Modifier.weight(1f))
 
@@ -169,11 +147,7 @@ fun PaymentScreen(
 
                     if (userId == null) {
                         loading = false
-                        Toast.makeText(
-                            context,
-                            "Please login first",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(context, "Please login first", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
@@ -188,28 +162,24 @@ fun PaymentScreen(
                         userId = userId,
                         title = title,
                         author = author,
+                        type = type,
+                        rating = rating,
                         imageUrl = imageUrl,
+                        summary = summary,
+                        rentedAt = System.currentTimeMillis(),
                         paymentMethod = paymentMethod,
                         rentFee = 50,
-                        status = "Rented",
-                        rentedAt = System.currentTimeMillis()
+                        status = "Rented"
                     )
 
                     rentRef.child(rentId).setValue(rentedBook)
                         .addOnSuccessListener {
                             loading = false
-
-                            Toast.makeText(
-                                context,
-                                "Book rented successfully",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
+                            Toast.makeText(context, "Book rented successfully", Toast.LENGTH_SHORT).show()
                             (context as? ComponentActivity)?.finish()
                         }
                         .addOnFailureListener {
                             loading = false
-
                             Toast.makeText(
                                 context,
                                 it.message ?: "Failed to rent book",
@@ -222,9 +192,7 @@ fun PaymentScreen(
                     .fillMaxWidth()
                     .height(54.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFB44444)
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB44444))
             ) {
                 Text(
                     text = if (loading) "Processing..." else "Confirm Payment",
@@ -259,10 +227,7 @@ fun PaymentOption(
 
             Spacer(Modifier.width(8.dp))
 
-            Text(
-                text = name,
-                fontWeight = FontWeight.Bold
-            )
+            Text(name, fontWeight = FontWeight.Bold)
         }
     }
 }
