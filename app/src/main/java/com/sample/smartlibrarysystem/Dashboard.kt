@@ -2,7 +2,6 @@ package com.sample.smartlibrarysystem
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -33,6 +32,7 @@ import coil3.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.sample.smartlibrarysystem.model.BookModel
+import com.sample.smartlibrarysystem.model.RentedBookModel
 import com.sample.smartlibrarysystem.model.UserModel
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
 
@@ -67,6 +67,7 @@ fun DashboardScreen() {
     var userName by remember { mutableStateOf("") }
     var userImageUrl by remember { mutableStateOf("") }
     var books by remember { mutableStateOf<List<BookModel>>(emptyList()) }
+    var rentedBooks by remember { mutableStateOf<List<RentedBookModel>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -80,6 +81,21 @@ fun DashboardScreen() {
                     val user = snapshot.getValue(UserModel::class.java)
                     userName = user?.name ?: ""
                     userImageUrl = user?.imageUrl ?: ""
+                }
+
+            FirebaseDatabase.getInstance()
+                .getReference("rented_books")
+                .child(userId)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    val list = mutableListOf<RentedBookModel>()
+
+                    for (child in snapshot.children) {
+                        val book = child.getValue(RentedBookModel::class.java)
+                        if (book != null) list.add(book)
+                    }
+
+                    rentedBooks = list
                 }
         }
 
@@ -99,7 +115,7 @@ fun DashboardScreen() {
     }
 
     Scaffold(
-        containerColor = Color(0xFFF8F7FF),
+        containerColor = Color(0xFFFDF6F8),
         bottomBar = {
             BottomNavigationBar(
                 selectedIndex = selectedTab,
@@ -107,27 +123,8 @@ fun DashboardScreen() {
                     selectedTab = index
 
                     when (index) {
-                        0 -> Unit
-
-                        1 -> {
-                            context.startActivity(
-                                Intent(context, BookTypeActivity::class.java)
-                            )
-                        }
-
-                        2 -> {
-                            Toast.makeText(
-                                context,
-                                "History screen not created yet",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-
-                        3 -> {
-                            context.startActivity(
-                                Intent(context, ProfileScreen::class.java)
-                            )
-                        }
+                        1 -> context.startActivity(Intent(context, BookTypeActivity::class.java))
+                        3 -> context.startActivity(Intent(context, ProfileScreen::class.java))
                     }
                 }
             )
@@ -143,74 +140,73 @@ fun DashboardScreen() {
         ) {
             Spacer(Modifier.height(12.dp))
 
-            TopHeader(
-                userName = userName,
-                imageUrl = userImageUrl
-            )
+            if (selectedTab == 2) {
+                BorrowedBooksScreen(rentedBooks = rentedBooks)
+            } else {
+                TopHeader(
+                    userName = userName,
+                    imageUrl = userImageUrl
+                )
 
-            Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(12.dp))
 
-            SearchBar(
-                onSearchClick = {
-                    context.startActivity(
-                        Intent(context, BookTypeActivity::class.java)
-                    )
+                SearchBar {
+                    context.startActivity(Intent(context, BookTypeActivity::class.java))
                 }
-            )
 
-            Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(18.dp))
 
-            QuickActions(
-                onTypeClick = { typeName ->
+                QuickActions { typeName ->
                     context.startActivity(
                         Intent(context, BookTypeActivity::class.java).apply {
                             putExtra("BOOK_TYPE", typeName)
                         }
                     )
                 }
-            )
 
-            Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(22.dp))
 
-            SectionTitle("Recommended for You")
+                SectionTitle("Recommended for You")
 
-            Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
-            RecommendedBooks(
-                books = books,
-                onBookClick = { book ->
-                    context.startActivity(
-                        Intent(context, BookDetailsActivity::class.java).apply {
-                            putExtra("title", book.title)
-                            putExtra("author", book.author)
-                            putExtra("type", book.type)
-                            putExtra("rating", book.rating)
-                            putExtra("available", book.isAvailable)
-                            putExtra("imageUrl", book.imageUrl)
-                            putExtra("summary", book.summary)
-                        }
-                    )
-                }
-            )
+                RecommendedBooks(
+                    books = books,
+                    onBookClick = { book ->
+                        openBookDetails(context, book)
+                    }
+                )
 
-            Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
 
-            SectionTitle("Borrowed Books")
+                SectionTitle("Borrowed Books")
 
-            Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
-            BorrowedBooks()
+                BorrowedBooksPreview(rentedBooks = rentedBooks)
+            }
 
             Spacer(Modifier.height(30.dp))
         }
     }
 }
 
+fun openBookDetails(context: android.content.Context, book: BookModel) {
+    context.startActivity(
+        Intent(context, BookDetailsActivity::class.java).apply {
+            putExtra("title", book.title)
+            putExtra("author", book.author)
+            putExtra("type", book.type)
+            putExtra("rating", book.rating)
+            putExtra("available", book.isAvailable)
+            putExtra("imageUrl", book.imageUrl)
+            putExtra("summary", book.summary)
+        }
+    )
+}
+
 @Composable
-fun TopHeader(
-    userName: String,
-    imageUrl: String
-) {
+fun TopHeader(userName: String, imageUrl: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -221,25 +217,27 @@ fun TopHeader(
             },
             contentDescription = "Profile picture",
             modifier = Modifier
-                .size(54.dp)
+                .size(46.dp)
                 .clip(CircleShape)
                 .background(Color(0xFFE5E7EB)),
             contentScale = ContentScale.Crop
         )
 
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Welcome Back 👋",
-                fontSize = 22.sp,
+                text = "Hi, ${userName.ifEmpty { "Student" }}",
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF111827)
+                color = Color(0xFF7B1E3B),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             Text(
-                text = userName.ifEmpty { "Student" },
-                fontSize = 15.sp,
+                text = "Welcome back to your library",
+                fontSize = 12.sp,
                 color = Color.Gray
             )
         }
@@ -248,42 +246,38 @@ fun TopHeader(
             Icon(
                 painter = painterResource(R.drawable.baseline_notifications_24),
                 contentDescription = "Notifications",
-                tint = Color(0xFF111827)
+                tint = Color(0xFF7B1E3B)
             )
         }
     }
 }
 
 @Composable
-fun SearchBar(
-    onSearchClick: () -> Unit
-) {
+fun SearchBar(onSearchClick: () -> Unit) {
     OutlinedTextField(
         value = "",
         onValueChange = {},
         readOnly = true,
         modifier = Modifier
             .fillMaxWidth()
+            .height(52.dp)
             .clickable { onSearchClick() },
         placeholder = {
-            Text(
-                text = "Search books, authors, categories...",
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
+            Text("Search books...", fontSize = 12.sp, color = Color.Gray)
         },
         leadingIcon = {
             Icon(
                 painter = painterResource(R.drawable.baseline_search_24),
                 contentDescription = "Search",
-                tint = Color.Gray
+                tint = Color.Gray,
+                modifier = Modifier.size(18.dp)
             )
         },
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color(0xFFB45454),
-            unfocusedBorderColor = Color(0xFFD8C5C5),
+            unfocusedBorderColor = Color(0xFFE3C5CC),
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White
         )
@@ -294,19 +288,17 @@ fun SearchBar(
 fun SectionTitle(title: String) {
     Text(
         text = title,
-        fontSize = 19.sp,
+        fontSize = 17.sp,
         fontWeight = FontWeight.Bold,
         color = Color(0xFF111827)
     )
 }
 
 @Composable
-fun QuickActions(
-    onTypeClick: (String) -> Unit
-) {
+fun QuickActions(onTypeClick: (String) -> Unit) {
     SectionTitle("Types of Books")
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(10.dp))
 
     val bookTypes = listOf(
         BookType("Novel", R.drawable.novel),
@@ -320,8 +312,8 @@ fun QuickActions(
         items(bookTypes) { type ->
             Column(
                 modifier = Modifier
-                    .padding(end = 12.dp)
-                    .width(100.dp)
+                    .padding(end = 10.dp)
+                    .width(88.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.White)
                     .clickable { onTypeClick(type.name) },
@@ -332,17 +324,17 @@ fun QuickActions(
                     contentDescription = type.name,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp),
+                        .height(82.dp),
                     contentScale = ContentScale.Crop
                 )
 
                 Text(
                     text = type.name,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = Color(0xFF374151),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp)
+                    modifier = Modifier.padding(vertical = 7.dp, horizontal = 5.dp)
                 )
             }
         }
@@ -355,106 +347,239 @@ fun RecommendedBooks(
     onBookClick: (BookModel) -> Unit
 ) {
     if (books.isEmpty()) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Text(
-                text = "No books available yet.",
-                modifier = Modifier.padding(18.dp),
-                color = Color.Gray
-            )
-        }
+        EmptyCard("No books available yet.")
         return
     }
 
     LazyRow {
         items(books.take(8)) { book ->
-            Card(
+            BookCard(book = book, onBookClick = onBookClick)
+        }
+    }
+}
+
+@Composable
+fun BorrowedBooksPreview(rentedBooks: List<RentedBookModel>) {
+    if (rentedBooks.isEmpty()) {
+        EmptyCard("No borrowed books yet.")
+        return
+    }
+
+    LazyRow {
+        items(rentedBooks.take(5)) { book ->
+            RentedBookCard(book = book)
+        }
+    }
+}
+
+@Composable
+fun BorrowedBooksScreen(rentedBooks: List<RentedBookModel>) {
+    Text(
+        text = "Borrowed Books",
+        fontSize = 22.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFF7B1E3B)
+    )
+
+    Spacer(Modifier.height(4.dp))
+
+    Text(
+        text = "Books you have rented",
+        fontSize = 13.sp,
+        color = Color.Gray
+    )
+
+    Spacer(Modifier.height(18.dp))
+
+    if (rentedBooks.isEmpty()) {
+        EmptyCard("No rented books found.")
+    } else {
+        rentedBooks.forEach { book ->
+            RentedBookRow(book = book)
+            Spacer(Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun RentedBookCard(book: RentedBookModel) {
+    Card(
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .width(150.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(9.dp)) {
+            AsyncImage(
+                model = book.imageUrl,
+                contentDescription = book.title,
                 modifier = Modifier
-                    .padding(end = 14.dp)
-                    .width(170.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(10.dp)
-                ) {
-                    AsyncImage(
-                        model = book.imageUrl,
-                        contentDescription = book.title,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFFE5E7EB)),
-                        contentScale = ContentScale.Crop
-                    )
+                    .fillMaxWidth()
+                    .height(132.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFE5E7EB)),
+                contentScale = ContentScale.Crop
+            )
 
-                    Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(9.dp))
 
-                    Text(
-                        text = book.title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = Color(0xFF111827),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+            Text(
+                text = book.title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = Color(0xFF111827),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
 
-                    Spacer(Modifier.height(3.dp))
+            Spacer(Modifier.height(3.dp))
 
-                    Text(
-                        text = book.author,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+            Text(
+                text = book.author,
+                fontSize = 11.sp,
+                color = Color.Gray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
 
-                    Spacer(Modifier.height(8.dp))
+@Composable
+fun RentedBookRow(book: RentedBookModel) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = book.imageUrl,
+                contentDescription = book.title,
+                modifier = Modifier
+                    .size(width = 72.dp, height = 92.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFE5E7EB)),
+                contentScale = ContentScale.Crop
+            )
 
-                    Button(
-                        onClick = { onBookClick(book) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFB45454)
-                        )
-                    ) {
-                        Text(
-                            text = "View",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
+            Spacer(Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = book.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF111827),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = book.author,
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "Currently Borrowed",
+                    fontSize = 11.sp,
+                    color = Color(0xFFB45454),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
 }
 
 @Composable
-fun BorrowedBooks() {
+fun BookCard(
+    book: BookModel,
+    onBookClick: (BookModel) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .width(150.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(9.dp)) {
+            AsyncImage(
+                model = book.imageUrl,
+                contentDescription = book.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(132.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFE5E7EB)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(Modifier.height(9.dp))
+
+            Text(
+                text = book.title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = Color(0xFF111827),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(3.dp))
+
+            Text(
+                text = book.author,
+                fontSize = 11.sp,
+                color = Color.Gray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = { onBookClick(book) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(36.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB45454))
+            ) {
+                Text("View", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyCard(message: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "No borrowed books yet.",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-        }
+        Text(
+            text = message,
+            modifier = Modifier.padding(18.dp),
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
     }
 }
 
@@ -466,7 +591,7 @@ fun BottomNavigationBar(
     val items = listOf(
         BottomNavItem("Home", R.drawable.baseline_home_24),
         BottomNavItem("Search", R.drawable.baseline_search_24),
-        BottomNavItem("History", R.drawable.baseline_history_24),
+        BottomNavItem("Borrowed", R.drawable.baseline_library_books_24),
         BottomNavItem("Profile", R.drawable.baseline_person_24)
     )
 
@@ -484,14 +609,11 @@ fun BottomNavigationBar(
                     Icon(
                         painter = painterResource(item.icon),
                         contentDescription = item.title,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(21.dp)
                     )
                 },
                 label = {
-                    Text(
-                        text = item.title,
-                        fontSize = 10.sp
-                    )
+                    Text(text = item.title, fontSize = 9.sp)
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color(0xFFB45454),
