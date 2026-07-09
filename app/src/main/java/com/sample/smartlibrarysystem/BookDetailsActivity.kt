@@ -22,9 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.sample.smartlibrarysystem.model.RentedBookModel
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
 
 class BookDetailsActivity : ComponentActivity() {
@@ -76,45 +73,16 @@ fun BookDetailsScreen(
                 ) {
                     Button(
                         onClick = {
-                            val userId = FirebaseAuth.getInstance().currentUser?.uid
-
-                            if (userId == null) {
-                                Toast.makeText(context, "Please login first", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
-
-                            val rentedRef = FirebaseDatabase.getInstance()
-                                .getReference("rented_books")
-                                .child(userId)
-                                .push()
-
-                            val rentedBook = RentedBookModel(
-                                rentId = rentedRef.key ?: "",
-                                userId = userId,
-                                title = title,
-                                author = author,
-                                type = type,
-                                rating = rating,
-                                imageUrl = imageUrl,
-                                summary = summary,
-                                rentedAt = System.currentTimeMillis()
+                            context.startActivity(
+                                Intent(context, PaymentActivity::class.java).apply {
+                                    putExtra("title", title)
+                                    putExtra("author", author)
+                                    putExtra("type", type)
+                                    putExtra("rating", rating)
+                                    putExtra("imageUrl", imageUrl)
+                                    putExtra("summary", summary)
+                                }
                             )
-
-                            rentedRef.setValue(rentedBook)
-                                .addOnSuccessListener {
-                                    Toast.makeText(context, "Book rented successfully", Toast.LENGTH_SHORT).show()
-
-                                    context.startActivity(
-                                        Intent(context, PaymentActivity::class.java).apply {
-                                            putExtra("title", title)
-                                            putExtra("author", author)
-                                            putExtra("imageUrl", imageUrl)
-                                        }
-                                    )
-                                }
-                                .addOnFailureListener {
-                                    Toast.makeText(context, "Failed to rent book", Toast.LENGTH_SHORT).show()
-                                }
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -219,7 +187,7 @@ fun BookDetailsScreen(
             Text(author, fontSize = 16.sp, color = Color.Gray)
 
             Spacer(Modifier.height(14.dp))
-            Divider(color = Color(0xFFB7A6A6))
+            HorizontalDivider(color = Color(0xFFB7A6A6))
             Spacer(Modifier.height(12.dp))
 
             Text(
