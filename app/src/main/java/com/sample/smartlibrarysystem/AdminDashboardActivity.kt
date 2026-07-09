@@ -303,95 +303,200 @@ fun TotalUsersScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(20.dp)
+            .background(Color(0xFFFDF6F8))
+            .padding(horizontal = 18.dp, vertical = 16.dp)
     ) {
         Text(
             text = "Registered Users",
-            fontSize = 26.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFFAA3E3E)
+            color = Color(0xFF7B1E3B)
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "Total Users: ${users.size}",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            text = "Manage all student accounts",
+            fontSize = 13.sp,
+            color = Color.Gray
         )
+
+        Spacer(Modifier.height(14.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE4EC))
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "👥",
+                    fontSize = 28.sp
+                )
+
+                Spacer(Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = "Total Users",
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
+
+                    Text(
+                        text = users.size.toString(),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF7B1E3B)
+                    )
+                }
+            }
+        }
 
         Spacer(Modifier.height(16.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(users) { user ->
-                var showDialog by remember { mutableStateOf(false) }
+        if (users.isEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Text(
+                    text = "No registered users found.",
+                    modifier = Modifier.padding(18.dp),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 90.dp)
+            ) {
+                items(users) { user ->
+                    var showDialog by remember { mutableStateOf(false) }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = user.name.ifEmpty { "No Name" },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-
-                        Text(user.email, color = Color.Gray, fontSize = 13.sp)
-                        Text(user.contact, color = Color.Gray, fontSize = 13.sp)
-
-                        Spacer(Modifier.height(10.dp))
-
-                        Button(
-                            onClick = { showDialog = true },
-                            modifier = Modifier.align(Alignment.End),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Red
-                            )
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Delete")
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(
+                                        color = Color(0xFFFFE4EC),
+                                        shape = RoundedCornerShape(14.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = user.name.firstOrNull()?.uppercase() ?: "U",
+                                    color = Color(0xFF7B1E3B),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+                            }
+
+                            Spacer(Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = user.name.ifEmpty { "No Name" },
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color(0xFF111827),
+                                    maxLines = 1
+                                )
+
+                                Spacer(Modifier.height(3.dp))
+
+                                Text(
+                                    text = user.email,
+                                    color = Color.Gray,
+                                    fontSize = 12.sp,
+                                    maxLines = 1
+                                )
+
+                                Spacer(Modifier.height(3.dp))
+
+                                Text(
+                                    text = user.contact.ifEmpty { "No phone number" },
+                                    color = Color.Gray,
+                                    fontSize = 12.sp
+                                )
+                            }
+
+                            Button(
+                                onClick = { showDialog = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFDC2626)
+                                ),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = "Delete",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
-                }
 
-                if (showDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDialog = false },
-                        title = { Text("Delete User") },
-                        text = { Text("Are you sure you want to delete this user?") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    userViewModel.deleteUser(user.id) { success, message ->
-                                        Toast.makeText(
-                                            context,
-                                            message,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-
-                                        if (success) {
-                                            loadUsers()
-                                        }
-                                    }
-
-                                    showDialog = false
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Red
+                    if (showDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDialog = false },
+                            title = {
+                                Text(
+                                    text = "Delete User",
+                                    fontWeight = FontWeight.Bold
                                 )
-                            ) {
-                                Text("Delete")
+                            },
+                            text = {
+                                Text("Are you sure you want to delete ${user.name.ifEmpty { "this user" }}?")
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        userViewModel.deleteUser(user.id) { success, message ->
+                                            Toast.makeText(
+                                                context,
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+
+                                            if (success) {
+                                                loadUsers()
+                                            }
+                                        }
+
+                                        showDialog = false
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFDC2626)
+                                    )
+                                ) {
+                                    Text("Delete")
+                                }
+                            },
+                            dismissButton = {
+                                OutlinedButton(
+                                    onClick = { showDialog = false }
+                                ) {
+                                    Text("Cancel")
+                                }
                             }
-                        },
-                        dismissButton = {
-                            OutlinedButton(
-                                onClick = { showDialog = false }
-                            ) {
-                                Text("Cancel")
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
