@@ -585,7 +585,12 @@ fun CategoryDropdown(
                 .clickable { expanded = true },
             shape = RoundedCornerShape(12.dp),
             trailingIcon = {
-                Text("⌄", modifier = Modifier.clickable { expanded = true })
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_arrow_drop_down_24),
+                    contentDescription = "Dropdown",
+                    tint = Color(0xFFAA3E3E),
+                    modifier = Modifier.clickable { expanded = true }
+                )
             }
         )
 
@@ -605,6 +610,8 @@ fun CategoryDropdown(
         }
     }
 }
+
+
 @Composable
 fun AdminRentedBooksScreen(modifier: Modifier = Modifier) {
     var rentedBooks by remember { mutableStateOf<List<RentedBookModel>>(emptyList()) }
