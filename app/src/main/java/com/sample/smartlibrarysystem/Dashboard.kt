@@ -35,7 +35,9 @@ import com.sample.smartlibrarysystem.model.BookModel
 import com.sample.smartlibrarysystem.model.RentedBookModel
 import com.sample.smartlibrarysystem.model.UserModel
 import com.sample.smartlibrarysystem.ui.theme.SmartLibrarySystemTheme
-
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 class Dashboard : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,17 +88,25 @@ fun DashboardScreen() {
             FirebaseDatabase.getInstance()
                 .getReference("rented_books")
                 .child(userId)
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    val list = mutableListOf<RentedBookModel>()
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val list = mutableListOf<RentedBookModel>()
 
-                    for (child in snapshot.children) {
-                        val book = child.getValue(RentedBookModel::class.java)
-                        if (book != null) list.add(book)
+                        for (child in snapshot.children) {
+                            val book = child.getValue(RentedBookModel::class.java)
+
+                            if (book != null && book.title.isNotBlank()) {
+                                list.add(book)
+                            }
+                        }
+
+                        rentedBooks = list.sortedByDescending { it.rentedAt }
                     }
 
-                    rentedBooks = list
-                }
+                    override fun onCancelled(error: DatabaseError) {
+                        // No action needed
+                    }
+                })
         }
 
         FirebaseDatabase.getInstance()
